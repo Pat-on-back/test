@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理</title>
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+    <link rel="stylesheet" href="/css/iconfont.css">
+</head>
+<body>
+<div id="index" style="width: 100%;height: 100%">
+    <el-container style="height: 100%; border: 1px solid #ffffff">
+
+        <el-aside style="width:200px;background-color: #ffffff;border-right: solid 1px #abc7cb;">
+            <img style="width: 200px;height: 120px;"
+                 src="https://dss2.bdstatic.com/8_V1bjqh_Q23odCf/pacific/1938931936.jpg"/>
+            <el-menu
+                    unique-opened
+                    background-color="#ffffff"
+                    text-color="#0A0810"
+                    active-text-color="#FF3F10"
+            >
+                <el-submenu :index="String(index)" :key="index" v-for="(item,index) of menus">
+                    <template slot="title"><i :class="item.icon"></i>{{item.name}}</template>
+                    <el-menu-item :index="index+'-'+i" @click="switchTo(child.indexUrl)" :key="i"
+                                  v-for="(child,i) of item.childs">{{child.name}}
+                    </el-menu-item>
+                </el-submenu>
+            </el-menu>
+        </el-aside>
+
+        <el-container>
+
+            <el-header style="text-align: right;">
+                <el-dropdown>
+                    <i class="el-icon-setting" style="margin-right: 10px;font-size: 20px"></i>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item>修改密码</el-dropdown-item>
+                        <el-dropdown-item @click.native="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+                <span style="font-size: 20px;color: #6e21f2">{{systemUser.loginName}}</span>
+            </el-header>
+            <el-main>
+                <div style="width: 100%;height: 100%">
+                    <iframe :src="indexUrl" height="100%" width="100%"
+                            frameborder="0"></iframe>
+                </div>
+            </el-main>
+
+        </el-container>
+    </el-container>
+</div>
+
+</body>
+<script>
+    new Vue({
+        el: '#index',
+        data: {
+            indexUrl: "http://localhost/admin/adminList",
+            menus: [],
+            systemUser: {}
+        },
+        mounted() {
+            this.getInfo();
+            axios.get("/menu/getTree").then(res => {
+                this.menus = res.data.data;
+            });
+        },
+        methods: {
+            getInfo() {
+                axios.get("/systemUser/getInfo").then(res => {
+                    this.systemUser = res.data.data;
+                });
+            },
+            logout() {
+                window.location = "/login"
+            },
+            switchTo(url) {
+                this.indexUrl = url
+            }
+        }
+    });
+</script>
+<style>
+    .el-header {
+        background-color: #B3C0D1;
+        color: #333;
+        line-height: 60px;
+    }
+
+
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+    }
+</style>
+</html>

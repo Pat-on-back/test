@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boot.renting.mapper.OrderMapper">
+
+
+    <select id="getInfoById" resultType="com.boot.renting.vo.OrderInfoVo">
+        SELECT
+            o.order_code orderCode,
+            u.name userName,
+            u.phone userPhone,
+            u2.name landlordName,
+            u2.phone landlordPhone,
+            h.subject houseSubject,
+            h.house_address houseAddress,
+            o.price price
+        FROM
+            t_order o
+        left JOIN t_house  h on o.house_code = h.house_code
+        left JOIN t_user u on o.user_code = u.user_code
+        left JOIN t_user u2 on h.user_code = u2.user_code
+        WHERE o.id = #{id}
+    </select>
+
+</mapper>

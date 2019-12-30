@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>房源列表</title>
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+</head>
+<body>
+<div id="houseList">
+    <div style="margin: 20px; float: right">
+        <el-button type="primary" icon="el-icon-edit" @click="addDialog = true,house={}">新增</el-button>
+        <el-button type="primary" icon="el-icon-refresh" @click="handleCurrentChange(1)">刷新</el-button>
+    </div>
+
+    <el-table :data="houseListData"
+              highlight-current-row
+              border
+              max-height="650"
+    >
+        <el-table-column type="index" label="序号" align="center" width="80px">
+            <template slot-scope="scope">
+                <span>{{(pageNo - 1) * pageSize + scope.$index + 1}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="houseCode" label="房子编码" align="center" width="230px">
+        </el-table-column>
+        <el-table-column prop="userCode" label="房东编号" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="subject" label="标题" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="houseAddress" label="房子地址" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="price" label="金额" align="center" :formatter="priceFormat">
+        </el-table-column>
+        <el-table-column prop="remark" label="备注" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="houseImg" label="图片" align="center" show-overflow-tooltip>
+            <template slot-scope="scope">
+                <img :src="scope.row.houseImg" style="width: 40px;height: 40px"/>
+            </template>
+        </el-table-column>
+        <el-table-column align="center" label="操作">
+            <template slot-scope="scope">
+                <el-button type="text" size="small" @click="edit(scope.row)">编辑</el-button>
+                <el-button type="text" size="small" @click="deleteById(scope.row.id)">删除</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+    <div class="block" style="float: right;padding: 30px">
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="total">
+        </el-pagination>
+    </div>
+
+    <el-dialog
+            title="删除"
+            :visible.sync="isDelete"
+            width="30%"
+    >
+        <span style="color: #ff100a;">你确定要删除这条数据吗?</span>
+        <span slot="footer" class="dialog-footer">
+    <el-button @click="isDelete = false">取 消</el-button>
+    <el-button type="primary" @click="confirmDeleteById">确 定</el-button>
+  </span>
+    </el-dialog>
+
+
+    <el-dialog title="新增" :visible.sync="addDialog" width="450px">
+        <div style="margin-bottom: 20px;">
+            标题:
+            <el-input v-model="house.subject" placeholder="姓名" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            地址:
+            <el-input v-model="house.houseAddress" placeholder="手机号" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            金额:
+            <el-input v-model="house.price" placeholder="金额" style="width:300px" maxlength="11"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            备注:
+            <el-input v-model="house.remark" placeholder="备注" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            房东:
+            <el-select
+                    v-model="house.userCode"
+                    @visible-change="visibleChange"
+                    placeholder="房东" style="width:300px"
+            >
+                <el-option
+                        v-for="item in userList"
+                        :key="item.id"
+                        :label="item.name"
+                        :value="item.userCode">
+                </el-option>
+            </el-select>
+        </div>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="addDialog = false">取 消</el-button>
+            <el-button type="primary" @click="add">保存</el-button>
+        </div>
+    </el-dialog>
+
+
+    <el-dialog title="编辑" :visible.sync="editDialog" width="450px">
+        <div style="margin-bottom: 20px;">
+            标题:
+            <el-input v-model="house.subject" placeholder="姓名" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            地址:
+            <el-input v-model="house.houseAddress" placeholder="手机号" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            金额:
+            <el-input v-model="house.price" placeholder="金额" style="width:300px" maxlength="11"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            备注:
+            <el-input v-model="house.remark" placeholder="备注" style="width:300px"></el-input>
+        </div>
+        <div style="margin-bottom: 20px">
+            房东:
+            <el-select
+                    v-model="house.userCode"
+                    @visible-change="visibleChange"
+                    placeholder="房东" style="width:300px"
+            >
+                <el-option
+                        v-for="item in userList"
+                        :key="item.id"
+                        :label="item.name"
+                        :value="item.userCode">
+                </el-option>
+            </el-select>
+        </div>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="editDialog = false">取 消</el-button>
+            <el-button type="primary" @click="confirmEdit">修改</el-button>
+        </div>
+    </el-dialog>
+</div>
+</body>
+<script>
+    new Vue({
+        el: '#houseList',
+        data: {
+            houseListData: [],
+            pageNo: 1,
+            pageSize: 10,
+            total: 0,
+            deleteId: null,
+            isDelete: false,
+            addDialog: false,
+            editDialog: false,
+            house: {
+                id: null,
+                houseCode: "",
+                subject: "",
+                userCode: "",
+                houseAddress: "",
+                price: null,
+                remark: ""
+            },
+            userList: []
+        },
+        mounted() {
+            this.http(this.pageNo, this.pageSize);
+        },
+        methods: {
+            http(pageNo, pageSize) {
+                axios.post("/house/housePageList", {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                }).then(res => {
+                    const {records, total} = res.data.data;
+                    this.houseListData = records;
+                    this.total = total;
+                });
+            },
+            //分页条
+            handleSizeChange(size) {
+                this.pageSize = size;
+                this.http(this.pageNo, size);
+            },
+            //页码改变
+            handleCurrentChange(currentPage) {
+                this.pageNo = currentPage;
+                this.http(currentPage, this.pageSize);
+            },
+            add() {
+                axios.post("/house/save", this.house).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.addDialog = false
+                        this.http(1, 10);
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            edit(house) {
+                this.house = house;
+                this.editDialog = true;
+            },
+            deleteById(id) {
+                this.deleteId = id;
+                this.isDelete = true;
+            },
+            confirmDeleteById() {
+                axios.get("/house/removeById/" + this.deleteId).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.isDelete = false;
+                        this.http(this.pageNo, this.pageSize);
+                    } else {
+                        this.message(message, "error");
+                    }
+
+                });
+            },
+            confirmEdit() {
+                axios.post("/house/updateById", this.house).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.editDialog = false;
+                        this.http(this.pageNo, this.pageSize);
+                    } else {
+                        this.message(message, "error");
+                    }
+
+                });
+            },
+            priceFormat(row, column, cellValue) {
+                if (cellValue) {
+                    return cellValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                return 0;
+            },
+            //success warning info error
+            message(message, type) {
+                this.$message({
+                    message: message,
+                    type: type == null ? "info" : type
+                });
+            },
+            visibleChange(change) {
+                if (change && this.userList.length === 0) {
+                    axios.get("/user/queryAllUser/2").then(res => {
+                        const {code, message, data} = res.data;
+                        if (code === 200) {
+                            this.userList = data;
+                        } else {
+                            this.message(message, "error");
+                        }
+                    });
+                }
+            }
+        }
+    })
+</script>
+<style>
+    .el-table__body tr.current-row td {
+        background-color: #d8c485;
+    }
+
+    .el-table--enable-row-hover .el-table__body tr:hover td {
+        background-color: #d8c485;
+    }
+
+</style>
+</html>

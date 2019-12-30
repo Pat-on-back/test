@@ -1,0 +1,444 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta http-equiv="cache-control" content="no-siteapp">
+
+    <title>首页</title>
+    <link rel='stylesheet' href='http://www.dmaku.com/demo/moban/2018061451985310/css/style.css' type='text/css'/>
+    <link rel='stylesheet' href='/css/user/index.css' type='text/css'/>
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+    <link rel="stylesheet" href="/css/iconfont.css">
+</head>
+<body class="home blog">
+<div id="userIndex">
+    <header class="header">
+        <div class="container">
+            <div class="sitenav" style="float: right">
+                <ul>
+                    <li class="menu-item"><a href="javascript:;" @click="num=1">首页</a></li>
+                    <li class="menu-item"><a href="javascript:;" @click="num=2,http2(1,10)">我的订单</a></li>
+                    <li class="menu-item"><a href="javascript:;" @click="num=3,http3(1,10)">浏览记录</a></li>
+                    <li class="menu-item"><a href="javascript:;" @click="num=4">我的</a></li>
+                    <li class="menu-item"><a href="/login">退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </header>
+    <div v-if="num==1">
+        <div id="homeso">
+            <form style="text-align: center;float: none">
+                <input tabindex="2" class="homesoin" type="text" v-model="key" placeholder="输入关键字">
+                <button tabindex="3" class="homesobtn" type="button" @click="http()"><i class="fa">查找</i></button>
+            </form>
+
+
+        </div>
+        <section class="container">
+            <div class="single-strong">房源列表<span class="chak"><a href="javascript:;">查看更多</a></span></div>
+            <div class="b-listtab-main">
+                <div class="s-tab-main">
+                    <ul class="list g-clear" :index="String(index)" :key="index" v-for="(item,index) of houseListData">
+                        <li class='item'>
+                            <div class='cover g-playicon' @click="detail(item.id,item.houseCode),isInfo=true">
+                                <img :src='item.houseImg'/>
+                            </div>
+                            <div class='detail'>
+                                <p class='title g-clear'>
+                                    <span class='s1'> {{item.subject}}</span>
+                                </p>
+                                <p class='title g-clear'>
+                                    <span class='s2'> &yen;{{String(item.price).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}}</span>
+                                </p>
+                                <p class='star'>{{item.houseAddress}}</p>
+                            </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <footer class="footer">
+            <div class="branding branding-black">
+                <div class="container" style="text-align: center;">
+                    <h2>租房</h2>
+                    <a class="gobtn" @click="message('联系我们','success')">联系我们</a>
+                    <a class="gobtn" @click="message('加入我们','success')">加入我们</a></div>
+            </div>
+        </footer>
+    </div>
+    <div v-if="num==2">
+        <el-table :data="orderListData"
+                  highlight-current-row
+                  border
+                  max-height="650"
+        >
+            <el-table-column type="index" label="序号" align="center" width="80px">
+                <template slot-scope="scope">
+                    <span>{{(pageNo - 1) * pageSize + scope.$index + 1}}</span>
+                </template>
+            </el-table-column>
+            <el-table-column prop="orderCode" label="订单编号" align="center" width="230px">
+            </el-table-column>
+            <el-table-column prop="userCode" label="用户编码" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="houseCode" label="房子编码" align="center">
+            </el-table-column>
+            <el-table-column prop="price" label="交易金额" align="center" :formatter="priceFormat">
+            </el-table-column>
+            <el-table-column align="center" label="操作">
+                <template slot-scope="scope">
+                    <el-button type="text" size="small" @click="deleteById(scope.row.id)">删除</el-button>
+                    <el-button type="text" size="small" @click="infoById(scope.row.id)">详情</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <div class="block" style="float: right;padding: 30px">
+            <el-pagination
+                    @size-change="handleSizeChange2"
+                    @current-change="handleCurrentChange2"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
+            </el-pagination>
+        </div>
+
+        <el-dialog
+                title="删除"
+                :visible.sync="isDelete"
+                width="30%"
+        >
+            <span style="color: #ff100a;">你确定要删除这条数据吗?</span>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="isDelete = false">取 消</el-button>
+    <el-button type="primary" @click="confirmDeleteById">确 定</el-button>
+  </span>
+        </el-dialog>
+
+        <el-dialog
+                title="交易详情"
+                :visible.sync="isInfo2"
+                width="400"
+                height="500"
+        >
+            <div style="margin-bottom: 20px;font-size: 20px">
+                订单编号:<span style="color: #ff100a;">{{orderInfo.orderCode}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                租客姓名:<span style="color: #ff100a;">{{orderInfo.userName}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                租客手机:<span style="color: #ff100a;">{{orderInfo.userPhone}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                房东姓名:<span style="color: #ff100a;">{{orderInfo.landlordName}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                房东手机:<span style="color: #ff100a;">{{orderInfo.landlordPhone}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                房子标题:<span style="color: #ff100a;">{{orderInfo.houseSubject}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                房子地址:<span style="color: #ff100a;">{{orderInfo.houseAddress}}</span>
+            </div>
+            <div style="margin-bottom: 20px;font-size: 20px">
+                交易金额:<span style="color: #ff100a;">{{orderInfo.price}}</span>
+            </div>
+            <span slot="footer" class="dialog-footer">
+            <el-button type="primary" @click="isInfo2 = false">关闭</el-button>
+            </span>
+        </el-dialog>
+    </div>
+    <div v-if="num==3">
+        <el-table :data="traceListData"
+                  highlight-current-row
+                  border
+                  max-height="650"
+        >
+            <el-table-column type="index" label="序号" align="center" width="80px">
+                <template slot-scope="scope">
+                    <span>{{(pageNo - 1) * pageSize + scope.$index + 1}}</span>
+                </template>
+            </el-table-column>
+            </el-table-column>
+            <el-table-column prop="subject" label="标题" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="name" label="房东姓名" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="phone" label="房东电话" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="houseAddress" label="房源地址" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="price" label="房源金额" align="center" :formatter="priceFormat">
+            </el-table-column>
+            <el-table-column prop="remark" label="备注" align="center" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column align="center" label="操作">
+                <template slot-scope="scope">
+                    <el-button type="text" size="small" @click="deleteTraceById(scope.row.id)">删除</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <div class="block" style="float: right;padding: 30px">
+            <el-pagination
+                    @size-change="handleSizeChange3"
+                    @current-change="handleCurrentChange3"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
+            </el-pagination>
+        </div>
+    </div>
+    <div v-if="num==4">
+        <div style="margin-left: 50px;margin-top: 20px;font-size: 20px">
+
+            姓名: <font color="blue">{{user.name}}</font><br/>
+            编号: <font color="blue"> {{user.userCode}}</font><br/>
+            手机号: <font color="blue">{{user.phone}}</font><br/>
+            性别: <font color="blue"> {{user.sex==1?"男":"女"}}</font><br/>
+            类型: <font color="blue"> {{user.type==1?"租客":"房东"}}</font><br/>
+            头像：<br/> <img :src="user.img" style="width: 300px;height: 300px"/>
+        </div>
+
+    </div>
+
+    <el-dialog
+            title="房源详情"
+            :visible.sync="isInfo"
+            width="400"
+            height="500"
+    >
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房东姓名:<span style="color: #ff100a;">{{houseInfo.name}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房东手机:<span style="color: #ff100a;">{{houseInfo.phone}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房源标题:<span style="color: #ff100a;">{{houseInfo.subject}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房源地址:<span style="color: #ff100a;">{{houseInfo.houseAddress}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房源金额:<span style="color: #ff100a;">{{houseInfo.price}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            备注信息:<span style="color: #ff100a;">{{houseInfo.remark}}</span>
+        </div>
+        <span slot="footer" class="dialog-footer">
+    <el-button @click="isInfo = false">取消</el-button>
+    <el-button type="primary" @click="save(houseInfo)">租房</el-button>
+  </span>
+    </el-dialog>
+</div>
+
+</body>
+<script>
+    new Vue({
+        el: '#userIndex',
+        data: {
+            key: null,
+            num: 1,
+            houseListData: [],
+            isInfo: false,
+            userCode: "",
+            user: {},
+            houseInfo: {
+                houseCode: "",
+                name: "",
+                phone: "",
+                subject: "",
+                houseAddress: "",
+                price: "",
+                remark: ""
+            },
+            orderListData: [],
+            traceListData: [],
+            pageNo: 1,
+            pageSize: 10,
+            isDelete: false,
+            orderDeleteId: null,
+            isInfo2: false,
+            total: 0,
+            orderInfo: {
+                orderCode: "",
+                userName: "",
+                userPhone: "",
+                landlordName: "",
+                landlordPhone: "",
+                houseSubject: "",
+                houseAddress: "",
+                price: ""
+            }
+        },
+        mounted() {
+            this.http();
+            this.getUserInfo();
+        },
+        methods: {
+            http() {
+                axios.post("/house/houseList", {
+                    key: this.key
+                }).then(res => {
+                    const {code, data} = res.data;
+                    this.houseListData = data;
+                });
+            },
+            http2(pageNo, pageSize) {
+                axios.post("/order/orderPageList", {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                    userCode: this.userCode
+                }).then(res => {
+                    const {records, total} = res.data.data;
+                    this.orderListData = records;
+                    this.total = total;
+                });
+            },
+            http3(pageNo, pageSize) {
+                axios.post("/trace/tracePageList", {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                    userCode: this.userCode
+                }).then(res => {
+                    const {records, total} = res.data.data;
+                    this.traceListData = records;
+                    this.total = total;
+                });
+            },
+            getUserInfo() {
+                axios.get("/user/getInfo/1").then(res => {
+                    const {code, data} = res.data;
+                    this.userCode = data.userCode;
+                    this.user = data;
+                });
+            },
+            detail(id, houseCode) {
+                axios.post("/trace/save", {
+                    userCode: this.userCode,
+                    houseCode: houseCode
+                });
+                axios.get("/house/getInfoById/" + id).then(res => {
+                    const {code, message, data} = res.data;
+                    if (code === 200) {
+                        this.houseInfo = data
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+
+
+            },
+            save(info) {
+                console.log(info)
+                axios.post("/order/save", {
+                    userCode: this.userCode,
+                    houseCode: info.houseCode,
+                    price: info.price
+                }).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.isInfo = false
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            //分页条
+            handleSizeChange(size) {
+                this.pageSize = size;
+                this.http(this.pageNo, size);
+            },
+            handleSizeChange2(size) {
+                this.pageSize = size;
+                this.http2(this.pageNo, size);
+            },
+            handleSizeChange3(size) {
+                this.pageSize = size;
+                this.http3(this.pageNo, size);
+            },
+            //页码改变
+            handleCurrentChange(currentPage) {
+                this.pageNo = currentPage;
+                this.http(currentPage, this.pageSize);
+            },
+            //页码改变
+            handleCurrentChange2(currentPage) {
+                this.pageNo = currentPage;
+                this.http2(currentPage, this.pageSize);
+            },
+            //页码改变
+            handleCurrentChange3(currentPage) {
+                this.pageNo = currentPage;
+                this.http3(currentPage, this.pageSize);
+            },
+            //success warning info error
+            message(message, type) {
+                this.$message({
+                    message: message,
+                    type: type == null ? "info" : type
+
+                });
+            },
+            priceFormat(row, column, cellValue) {
+                if (cellValue) {
+                    return cellValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                return 0;
+            },
+            confirmDeleteById() {
+                axios.get("/order/removeById/" + this.orderDeleteId).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.isDelete = false;
+                        this.http2(this.pageNo, this.pageSize);
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            deleteById(id) {
+                this.orderDeleteId = id;
+                this.isDelete = true;
+            },
+            infoById(id) {
+                this.isInfo2 = true;
+                axios.get("/order/getInfoById/" + id).then(res => {
+                    const {code, message, data} = res.data;
+                    if (code === 200) {
+                        this.orderInfo = data;
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            deleteTraceById(id) {
+                axios.get("/trace/removeById/" + id).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.http3(this.pageNo, this.pageSize);
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            }
+        }
+    })
+</script>
+</html>

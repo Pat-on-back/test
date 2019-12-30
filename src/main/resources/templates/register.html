@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>用户注册</title>
+    <link href="http://www.dmaku.com/demo/moban/2018062057985310/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://www.dmaku.com/demo/moban/2018062057985310/css/a3common.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://www.dmaku.com/demo/moban/2018062057985310/css/font_43459_lbtux0zjkr6yldi.css">
+    <link rel="stylesheet" href="http://www.dmaku.com/demo/moban/2018062057985310/css/register.css">
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+</head>
+<body>
+
+
+<div id="register" class="main-warp">
+    <div class="main-content">
+        <div class="formDiv">
+
+            <h2 class="title text-center">注册</h2>
+
+            <div class="form-item">
+                <div class="input-warp">
+                    <span class="input-icon iconfont icon-yonghu1"></span>
+                    <input v-model="user.phone" maxlength="11"
+                           placeholder="手机号码" type="text"
+                           class="inputs"/>
+                </div>
+                <p class="errMsg"></p>
+            </div>
+            <div class="form-item">
+                <div class="input-warp">
+                    <span class="input-icon iconfont icon-yonghu1"></span>
+                    <input v-model="user.name"
+                           placeholder="姓名" type="text"
+                           class="inputs"/>
+                </div>
+                <p class="errMsg"></p>
+            </div>
+            <div class="form-item">
+                <el-select v-model="user.type" placeholder="请选择注册类型">
+                    <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <p class="errMsg"></p>
+            <div class="form-item">
+                <div class="input-warp s">
+                    <span class="input-icon iconfont icon-yanzhengma"></span>
+                    <input v-model="user.code" placeholder="验证码" type="text" class="inputs"/>
+                    <div style="display: none"></div>
+                </div>
+                <div class="pull-right">
+                    <button type="button" @click="sendCode()" class="btn  blue">获取验证码</button>
+                </div>
+                <p class="errMsg"></p>
+            </div>
+            <!--<div class="form-item">-->
+            <!--<div class="input-warp">-->
+            <!--<span class="input-icon iconfont icon-baomi"></span>-->
+            <!--<input type="password" placeholder="至少6位字母或数字" maxlength="20"-->
+            <!--class="inputs"/>-->
+            <!--</div>-->
+            <!--<p class="errMsg"></p>-->
+            <!--</div>-->
+            <!--<div class="form-item">-->
+            <!--<div class="input-warp">-->
+            <!--<span class="input-icon iconfont icon-baomi"></span>-->
+            <!--<input type="password" placeholder="至少6位字母或数字" maxlength="20"-->
+            <!--class="inputs"/>-->
+            <!--</div>-->
+            <!--<p class="errMsg"></p>-->
+            <!--</div>-->
+            <!--<div class="form-item">-->
+            <!--<div class="input-warp">-->
+            <!--<span class="input-icon iconfont icon-youxiangbangding"></span>-->
+            <!--<input v-model="type"-->
+            <!--placeholder="邮箱地址"-->
+            <!--type="text" class="inputs"-->
+            <!--/>-->
+            <!--</div>-->
+            <!--<p class="errMsg"></p>-->
+            <!--</div>-->
+            <div class="btn-warp">
+                <div class="text-center">
+                    <button type="button" @click="register()" class="btn lgbtn blue btn-block">注册</button>
+                </div>
+            </div>
+            <div class="agreement gap">
+                <div class="text-right">
+                    <div class="pull-left">已有账号，<a href="/login" class="link">登录</a></div>
+                    <p>注册即代表您已阅读并同意《
+                        <el-button type="text" @click="message('没得','success')">使用协议</el-button>
+                        》
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '#register',
+        data: {
+            options: [{
+                value: 1,
+                label: "租客"
+            }, {
+                value: 2,
+                label: "房东"
+            }],
+            user: {
+                phone: "",
+                code: "",
+                name: "",
+                type: ""
+            },
+
+        },
+        mounted() {
+        },
+        methods: {
+            sendCode() {
+                if (this.user.phone) {
+                    axios.get("/user/registerSendCode", {
+                        params: {
+                            phone: this.user.phone,
+                            type: 2
+                        }
+                    }).then(res => {
+                        const {code, message, data} = res.data;
+                        if (code === 200) {
+                            this.user.code = data;
+                        } else {
+                            this.message(message, "error");
+                        }
+                        console.log(code);
+                        console.log(res.data);
+                    });
+                } else {
+                    this.message("请输入手机号");
+                }
+
+            },
+            //success warning info error
+            register() {
+                axios.post("/user/register", this.user).then(res => {
+                    const {code, message, data} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        window.location = data;
+                    } else {
+                        this.message(message, "error");
+                    }
+                    console.log(code);
+                    console.log(res.data);
+                });
+
+            },
+            message(message, type) {
+                this.$message({
+                    message: message,
+                    type: type == null ? "info" : type
+
+                });
+            },
+        }
+    })
+</script>
+
+</body>
+</html>

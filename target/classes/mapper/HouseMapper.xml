@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boot.renting.mapper.HouseMapper">
+
+
+    <select id="getInfoById" resultType="com.boot.renting.vo.HouseInfoVo">
+       SELECT
+       		h.house_code houseCode,
+			u.name,
+			u.phone,
+			h.subject,
+			h.house_address houseAddress,
+			h.price,
+			h.remark
+		FROM
+			t_house h
+		left JOIN t_user u on h.user_code = u.user_code
+        WHERE h.id = #{id}
+    </select>
+
+</mapper>

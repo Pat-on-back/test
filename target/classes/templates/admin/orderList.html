@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>交易列表</title>
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+</head>
+<body>
+<div id="orderList">
+    <div style="margin: 20px; float: right">
+        <el-button type="primary" icon="el-icon-refresh" @click="handleCurrentChange(1)">刷新</el-button>
+    </div>
+
+    <el-table :data="orderListData"
+              highlight-current-row
+              border
+              max-height="650"
+    >
+        <el-table-column type="index" label="序号" align="center" width="80px">
+            <template slot-scope="scope">
+                <span>{{(pageNo - 1) * pageSize + scope.$index + 1}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="orderCode" label="订单编号" align="center" width="230px">
+        </el-table-column>
+        <el-table-column prop="userCode" label="用户编码" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="houseCode" label="房子编码" align="center" show-overflow-tooltip>
+        </el-table-column>
+        <el-table-column prop="price" label="交易金额" align="center" :formatter="priceFormat">
+        </el-table-column>
+        <el-table-column align="center" label="操作">
+            <template slot-scope="scope">
+                <el-button type="text" size="small" @click="deleteById(scope.row.id)">删除</el-button>
+                <el-button type="text" size="small" @click="infoById(scope.row.id)">详情</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+    <div class="block" style="float: right;padding: 30px">
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="total">
+        </el-pagination>
+    </div>
+
+    <el-dialog
+            title="删除"
+            :visible.sync="isDelete"
+            width="30%"
+    >
+        <span style="color: #ff100a;">你确定要删除这条数据吗?</span>
+        <span slot="footer" class="dialog-footer">
+    <el-button @click="isDelete = false">取 消</el-button>
+    <el-button type="primary" @click="confirmDeleteById">确 定</el-button>
+  </span>
+    </el-dialog>
+
+    <el-dialog
+            title="交易详情"
+            :visible.sync="isInfo"
+            width="400"
+            height="500"
+    >
+        <div style="margin-bottom: 20px;font-size: 20px">
+            订单编号:<span style="color: #ff100a;">{{orderInfo.orderCode}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            租客姓名:<span style="color: #ff100a;">{{orderInfo.userName}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            租客手机:<span style="color: #ff100a;">{{orderInfo.userPhone}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房东姓名:<span style="color: #ff100a;">{{orderInfo.landlordName}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房东手机:<span style="color: #ff100a;">{{orderInfo.landlordPhone}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房子标题:<span style="color: #ff100a;">{{orderInfo.houseSubject}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            房子地址:<span style="color: #ff100a;">{{orderInfo.houseAddress}}</span>
+        </div>
+        <div style="margin-bottom: 20px;font-size: 20px">
+            交易金额:<span style="color: #ff100a;">{{orderInfo.price}}</span>
+        </div>
+
+
+        <span slot="footer" class="dialog-footer">
+    <el-button type="primary" @click="isInfo = false">关闭</el-button>
+  </span>
+    </el-dialog>
+</div>
+</body>
+<script>
+    new Vue({
+        el: '#orderList',
+        data: {
+            orderListData: [],
+            pageNo: 1,
+            pageSize: 10,
+            total: 0,
+            deleteId: null,
+            isDelete: false,
+            isInfo: false,
+            orderInfo: {
+                orderCode: "",
+                userName: "",
+                userPhone: "",
+                landlordName: "",
+                landlordPhone: "",
+                houseSubject: "",
+                houseAddress: "",
+                price: ""
+            }
+        },
+        mounted() {
+            this.http(this.pageNo, this.pageSize);
+        },
+        methods: {
+            http(pageNo, pageSize) {
+                axios.post("/order/orderPageList", {
+                    pageNo: pageNo,
+                    pageSize: pageSize
+                }).then(res => {
+                    const {records, total} = res.data.data;
+                    this.orderListData = records;
+                    this.total = total;
+                });
+            },
+            //分页条
+            handleSizeChange(size) {
+                this.pageSize = size;
+                this.http(this.pageNo, size);
+            },
+            //页码改变
+            handleCurrentChange(currentPage) {
+                this.pageNo = currentPage;
+                this.http(currentPage, this.pageSize);
+            },
+            deleteById(id) {
+                this.deleteId = id;
+                this.isDelete = true;
+            },
+            infoById(id) {
+                this.isInfo = true;
+                axios.get("/order/getInfoById/" + id).then(res => {
+                    const {code, message, data} = res.data;
+                    if (code === 200) {
+                        this.orderInfo = data;
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            confirmDeleteById() {
+                axios.get("/order/removeById/" + this.deleteId).then(res => {
+                    const {code, message} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        this.isDelete = false;
+                        this.http(this.pageNo, this.pageSize);
+                    } else {
+                        this.message(message, "error");
+                    }
+                });
+            },
+            //success warning info error
+            message(message, type) {
+                this.$message({
+                    message: message,
+                    type: type == null ? "info" : type
+
+                });
+            }, priceFormat(row, column, cellValue) {
+                if (cellValue) {
+                    return cellValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                return 0;
+            }
+        }
+    })
+</script>
+<style>
+    .el-table__body tr.current-row td {
+        background-color: #d8c485;
+    }
+
+    .el-table--enable-row-hover .el-table__body tr:hover td {
+        background-color: #d8c485;
+    }
+
+</style>
+</html>

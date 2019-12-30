@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boot.renting.mapper.TraceMapper">
+
+
+    <select id="tracePageList" resultType="com.boot.renting.vo.TraceInfoVo">
+        SELECT
+            tt.id,
+            u.user_code,
+            h.subject,
+            u.name,
+            u.phone,
+            h.house_address houseAddress,
+            h.price,
+            h.remark
+        FROM
+            t_trace tt
+        left JOIN t_user u on tt.user_code = u.user_code
+        left JOIN t_house h on tt.house_code = h.house_code
+        WHERE u.user_code =#{userCode}
+
+    </select>
+</mapper>

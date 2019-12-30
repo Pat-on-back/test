@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>系统用户登录</title>
+    <link href="http://www.dmaku.com/demo/moban/2018062057985310/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://www.dmaku.com/demo/moban/2018062057985310/css/a3common.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://www.dmaku.com/demo/moban/2018062057985310/css/login.css">
+    <link rel="stylesheet" href="http://www.dmaku.com/demo/moban/2018062057985310/css/font_43459_lbtux0zjkr6yldi.css">
+    <link rel="stylesheet" href="http://www.dmaku.com/demo/moban/2018062057985310/css/register.css">
+    <script src="/js/vue.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/element-ui.js"></script>
+    <link rel="stylesheet" href="/css/element-ui.css">
+
+</head>
+<body>
+<div id="main" class="main-warp">
+    <div class="main-content">
+        <div class="formDiv">
+
+            <h2 class="text-center">
+                <span class="split-space" style="color: #289bff;">登录</span>
+            </h2>
+            <div class="dataform">
+                <div class="input-warp gap">
+                    <span class="input-icon iconfont icon-yonghu1"></span>
+                    <input v-model="systemUser.loginName" type="text" class="inputs" placeholder="账号">
+                </div>
+                <div class="input-warp gap">
+                    <span class="input-icon iconfont icon-baomi"></span>
+                    <input v-model="systemUser.loginPassword" type="password" placeholder="密码" class="inputs"/>
+                </div>
+
+                <div class="btn-warp gap">
+                    <div class="text-center">
+                        <button @click="login()" class="btn btn-block lgbtn blue">登录</button>
+                    </div>
+                </div>
+
+                <div class="gap">
+
+                    <div class="pull-right" style="margin-top: 6px">
+                        <a href="/login" style="margin-right: 20px">用户登录</a>
+                    </div>
+
+                    <div class="pretty-box">
+                        <input type="checkbox" value="1" name="REMEMBER" id="remember" class="">
+                        <label for="remember" style="font-weight: normal">记住我</label>
+                    </div>
+                </div>
+
+                <div class="biggap third-party-title">
+                    <h5 class="text-center"><span>第三方账号登录</span></h5>
+                </div>
+                <div class="third-auth">
+
+                    <a title="用钉钉登录" class="dt" href="javascript:;"></a>
+                    <a title="用微信账户登录" class="wx" href="javascript:;"></a>
+                    <a title="用QQ账户登录" class="qq" href="javascript:;"></a>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '#main',
+        data: {
+            systemUser: {
+                loginName: "",
+                loginPassword: ""
+            }
+        },
+        mounted() {
+        },
+        methods: {
+            login() {
+                axios.post("/systemUser/login", this.systemUser).then(res => {
+                    const {code, message, data} = res.data;
+                    if (code === 200) {
+                        this.message(message, "success");
+                        window.location = data;
+                    } else {
+                        this.message(message, "error");
+                    }
+                    console.log(code);
+                    console.log(res.data);
+                });
+
+            },
+            //success warning info error
+            message(message, type) {
+                this.$message({
+                    message: message,
+                    type: type == null ? "info" : type
+
+                });
+            }
+        }
+    })
+</script>
+</body>
+</html>
